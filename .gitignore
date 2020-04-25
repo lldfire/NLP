@@ -7,3 +7,4 @@ datas/
 *.jpg
 *.html
 .DS_Store
+__pycache__/
