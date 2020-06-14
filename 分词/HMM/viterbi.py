@@ -37,41 +37,34 @@ B_pro = {
 
 def viterbit_dict(obs, states, pi_pro, A_pro, B_pro):
     # init path: path[s] represents the path ends with s
-    path = {s: [] for s in states}
-    curr_pro = {}
-    # 开始时刻时，各个状态下出现该观测值的概率
-    for s in states:
-        curr_pro[s] = pi_pro[s] * B_pro[s][obs[0]]
-    # print(curr_pro)
-    for i in range(1, len(obs)):
-        last_pro = curr_pro     # 上一个状态的概率分布
-        curr_pro = {}
-        for curr_state in states:
-            # 上一个状态到当前状态的概率值最大的路径和状态
-            # 上一个状态发生的概率 * 从上一个状态转移为当前状态的概率 * 
-            # 当前状态下的观测值的概率
-            max_pro, last_sta = max(((last_pro[last_state] * A_pro[last_state][curr_state] * B_pro[curr_state][obs[i]], last_state)
-                                     for last_state in states))
-            curr_pro[curr_state] = max_pro
-            path[curr_state].append(last_sta)
-            # print(curr_pro)
-            # print(path)
+    path_v = [{}]
+    path_max = {}
 
-    # find the final largest probability
-    max_pro = -1
-    max_path = None
-    # print(path)
-    # print(curr_pro)
-    for s in states:
-        path[s].append(s)
-        # print(path)
-        # 比较最后一个状态的可能概率值
-        if curr_pro[s] > max_pro:
-            max_path = path[s]
-            max_pro = curr_pro[s]
-        # print('%s: %s' % (curr_pro[s], path[s]))
-    print(max_pro)
-    return max_path
+    # 计算初始时的状态概率
+    for state in states:
+        path_v[0][state] = pi_pro[state] * B_pro[state].get(obs[0], 0)
+        path_max[state] = [state]
+
+    print(path_max)
+    # print(path_v)
+    # 计算第一个观测值之后的观测值
+    for o in range(1, len(obs)):
+        path_v.append({})
+        new_path = {}
+
+        # 每个状态到每个观测值的发射概率
+        for state in states:
+            temp_pro, temp_state = max(((path_v[o - 1][l] * A_pro[l][state] * B_pro[state].get(obs[o], 0), l) for l in states))
+            path_v[o][state] = temp_pro
+
+            new_path[state] = path_max[temp_state] + [state]
+        path_max = new_path
+        # print(path_v)
+        # print(path_max)
+    best_path_pro, last_state = max((
+        path_v[len(obs) - 1][s], s) for s in states)
+    print(path_v)
+    print(path_max[last_state])
 
 
 # 矩阵的形势表示HMM的元素
@@ -108,10 +101,10 @@ def viterbit_mat(obs, states, pi_pro, A_pro, B_pro):
 
 
 if __name__ == '__main__':
-    # obs1 = ['正常', '冷', '头晕', '头晕', '冷', '冷', '正常']
-    # obs2 = [0, 1, 2, 2, 1, 1, 0]
+    obs1 = ['正常', '冷', '头晕', '头晕', '冷', '冷', '正常', '头晕']
+    obs2 = [0, 1, 2, 2, 1, 1, 0, 2]
 
-    # print(viterbit_dict(obs1, states, pi_pro, A_pro, B_pro))
-    # print(viterbit_mat(obs2, states_mat, pi_pro_mat, A_pro_mat, B_pro_mat))
+    viterbit_dict(obs1, states, pi_pro, A_pro, B_pro)
+    print(viterbit_mat(obs2, states_mat, pi_pro_mat, A_pro_mat, B_pro_mat))
     # print(help(np.array(states)))
-    print(pd.DataFrame(A_pro).to_numpy())
+    # print(pd.DataFrame(A_pro).to_numpy())

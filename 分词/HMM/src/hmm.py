@@ -1,8 +1,9 @@
 import pickle
-import numpy as np
-import pandas as pd
 from collections import defaultdict, Counter
-from config import get_config
+from src.config import get_config
+
+
+__hmm = None
 
 
 class Hmm(object):
@@ -69,6 +70,7 @@ class Hmm(object):
         A_state = {state: {k: 0.0 for k in cls.STATE} for state in cls.STATE}
         states = ''.join(cls._states)
         state_count = Counter(states)    # 统计每个状态的数量
+        
         # print(state_count)
         for idx in range(len(states) - 1):
             A_state[states[idx]][states[idx + 1]] += 1
@@ -136,6 +138,7 @@ class Hmm(object):
         cls.read_corpus_from_file(path)
         cls.genrate_vocab()
         cls.genrate_hmm()
+        print('模型训练完成！')
 
     @classmethod
     def update(cls):
@@ -194,7 +197,7 @@ class Viterbit:
 
         return path_max[last_state]
 
-    def decode(self, text):
+    def cut(self, text):
         best_path = Viterbit.viterbit_dict(
             text, self.states, self.pi_pro, self.A_pro, self.B_pro)
         
@@ -207,8 +210,13 @@ class Viterbit:
         return result
 
 
-if __name__ == '__main__':
+def train_hmm():
+    global __hmm
+    if not __hmm:
+        __hmm = Hmm
+    return __hmm
+
+
+def use_cut():
     hmm_params = Hmm.load_hmm_params()
-    vt = Viterbit(hmm_params)
-    print(vt.decode('允许自卫队能够在海外的战地区'))
-    # print(vt.states)
+    return Viterbit(hmm_params)
